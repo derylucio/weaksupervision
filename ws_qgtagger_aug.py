@@ -14,7 +14,7 @@ from theano import tensor as T
 matplotlib.use('pdf')
 # scan the number of examples
 # understand why current example does worse than random.
-run = "3"
+run = "4"
 SAMPLES_PER_EPOCH = 512000
 NB_EPOCH = 10
 NB_VAL_SAMPLES = 12800
@@ -82,7 +82,7 @@ def custom_objective_nostd(ytrue, ypred):
 	loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
 	return loss
 
-def custom_objective(ytrue, ypred):
+def custom_objective_std(ytrue, ypred):
 	# Assuming that ypred contains the same ratio replicated
 	loss1 = K.sum(ypred)/BATCH_SIZE - K.sum(ytrue)/BATCH_SIZE
 	constrib =  STD_IMP*K.std(ypred) 
@@ -95,6 +95,8 @@ def custom_objective(ytrue, ypred):
 
 def evaluateModel(plt_ax, hist_ax,  model, label, x_test, y_test):
 	predict_proba = model.predict_proba(x_test)
+	print label, 'min', min(predict_proba)
+	print label, 'max', max(predict_proba)
 	fpr,tpr,thres = roc_curve(y_test, predict_proba)	
 	hist_ax.hist(predict_proba[y_test == 1], histtype='step', normed=True, label = label  + ' signal')
 	hist_ax.hist(predict_proba[y_test == 0], histtype='step',  normed=True, label = label + ' background')
@@ -102,26 +104,26 @@ def evaluateModel(plt_ax, hist_ax,  model, label, x_test, y_test):
 	print label, area
 	plt_ax.plot(fpr, tpr, label=label)
 
+def trainModel(train_samples, train_output, val_samples, val_output, loss_function, savefilename):
+	model = Sequential()
+	model.add(Dense(3, input_dim=(NUM_FEATURES), init='normal', activation='sigmoid') )
+	model.add(Dense(1, init='normal', activation='sigmoid') )
+	model.compile(loss=loss_function, optimizer='Adam')
+	checkpointer = ModelCheckpoint(savefilename, monitor='val_loss', save_best_only=True)
+	model.fit_generator(data_generator(train_samples, train_output), SAMPLES_PER_EPOCH, NB_EPOCH, \
+	 validation_data=data_generator(val_samples, val_output), nb_val_samples=NB_VAL_SAMPLES, callbacks=[checkpointer])
+	return model
+
 print 'Getting Training Samples'
 train_samples, train_output, train_ty = generateTrainSamples(SAMPLES_PER_EPOCH)
 val_samples, val_output, val_ty  = generateTrainSamples(NB_VAL_SAMPLES)
 
 
-print 'Training Model without STD augmentation'
-model_nstd = Sequential()
-model_nstd.add(Dense(3, input_dim=(NUM_FEATURES), init='normal', activation='sigmoid') )
-model_nstd.add(Dense(1, init='normal', activation='sigmoid') )
-model_nstd.compile(loss=custom_objective_nostd, optimizer='Adam')
-checkpointer = ModelCheckpoint('weights', monitor='val_loss', save_best_only=True)
-history = model_nstd.fit_generator(data_generator(train_samples, train_output), SAMPLES_PER_EPOCH, NB_EPOCH, validation_data=data_generator(val_samples, val_output), nb_val_samples=NB_VAL_SAMPLES, callbacks=[checkpointer])
+print 'Training Model No STD augmentation'
+model_nostd = trainModel(train_samples, train_output, val_samples, val_output, custom_objective_nostd, 'weights_nostd')
 
-print 'Training Model with STD augmentation'
-model = Sequential()
-model.add(Dense(3, input_dim=(NUM_FEATURES), init='normal', activation='sigmoid') )
-model.add(Dense(1, init='normal', activation='sigmoid') )
-model.compile(loss=custom_objective, optimizer='Adam')
-checkpointer = ModelCheckpoint('weights', monitor='val_loss', save_best_only=True)
-history = model.fit_generator(data_generator(train_samples, train_output), SAMPLES_PER_EPOCH, NB_EPOCH, validation_data=data_generator(val_samples, val_output), nb_val_samples=NB_VAL_SAMPLES, callbacks=[checkpointer])
+print 'Training Model STD augmentation'
+model_std = trainModel(train_samples, train_output, val_samples, val_output, custom_objective_std, 'weights_std')
 
 _, axarr = plt.subplots(3, 1)
 axarr[0].set_xlabel('True Positive')
@@ -133,33 +135,23 @@ axarr[2].set_ylabel('Fraction')
 
 x_test, y_test = generateTestSamples(NUM_TEST_SAMPLES,NUM_TEST_SAMPLES)
 print 'Evaluating Weak Supervision Model - NO_STD'
-evaluateModel(axarr[0], axarr[1], model_nstd, 'Weak Supervision - No STD', x_test, y_test)
-
-
+evaluateModel(axarr[0], axarr[1], model_nostd, 'Weak Supervision - No STD', x_test, y_test)
 
 print 'Evaluating Complete Supervision Model'
 train_samples = np.array(train_samples)
 train_ty = np.array(train_ty)
+print 'unrolling batches of data into single vector of samples'
 supervised_samples = np.reshape(train_samples, (train_samples.shape[1]*train_samples.shape[0], train_samples.shape[2]))
-print supervised_samples.shape
-print train_ty.shape
 supervised_output = np.reshape(train_ty, (SAMPLES_PER_EPOCH, 1))
-print supervised_output.shape
-
-model2 = Sequential()
-model2.add( Dense(3, input_dim=(supervised_samples.shape[1]), init='normal', activation='sigmoid') )
-model2.add( Dense(1, init='normal', activation='sigmoid') )
-model2.compile(loss='mean_squared_error', optimizer='sgd')
-
-history = model2.fit(supervised_samples, supervised_output, batch_size=128, nb_epoch=NB_EPOCH, validation_split=0.2)
-evaluateModel(axarr[0], axarr[2], model2, 'Complete Supervision', x_test, y_test)
 
 
-random_val = np.random.uniform(size=(len(y_test)))
-print len(random_val)
-fpr,tpr,thres = roc_curve(y_test, random_val)	
-area =  auc(fpr, tpr)
-print area
+model_complete = Sequential()
+model_complete.add( Dense(3, input_dim=(supervised_samples.shape[1]), init='normal', activation='sigmoid') )
+model_complete.add( Dense(1, init='normal', activation='sigmoid') )
+model_complete.compile(loss='mean_squared_error', optimizer='sgd')
+
+history = model_complete.fit(supervised_samples, supervised_output, batch_size=128, nb_epoch=NB_EPOCH, validation_split=0.2)
+evaluateModel(axarr[0], axarr[2], model_complete, 'Complete Supervision', x_test, y_test)
 
 
 lgd1 = axarr[0].legend(loc='upper left', bbox_to_anchor=(1, 1.25))         
@@ -179,8 +171,8 @@ axarr[2].set_ylabel('Fraction')
 
 
 print 'Evaluating Weak Supervision Model - STD'
-evaluateModel(axarr[0], axarr[1], model, 'Weak Supervision - STD', x_test, y_test)
-evaluateModel(axarr[0], axarr[2], model2, 'Complete Supervision', x_test, y_test)
+evaluateModel(axarr[0], axarr[1], model_std, 'Weak Supervision - STD', x_test, y_test)
+evaluateModel(axarr[0], axarr[2], model_complete, 'Complete Supervision', x_test, y_test)
 
 lgd1 = axarr[0].legend(loc='upper left', bbox_to_anchor=(1, 1.25))         
 lgd2 = axarr[1].legend(loc='upper left', bbox_to_anchor=(1, 1.25))
