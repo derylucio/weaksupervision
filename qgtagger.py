@@ -10,13 +10,16 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 
 run = 1
+
 REGULARIZATION = 1e-4
 NB_EPOCH = 10
 features = ['n','w','eec2']
 etamax = 2.1
-nbins = 6
+nbins = 2
 bins = np.linspace(-2.1,2.1,nbins)
 scaler = StandardScaler()
+
+suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
 
 def getSamples(features,etamax,bins):
     filename = 'data/20161103_16h20min.root'
@@ -106,7 +109,7 @@ model_weak.add(Dense(3, input_dim=(len(features)),
                      init='normal', activation='sigmoid') )
 model_weak.add(Dense(1, init='normal', activation='sigmoid') )
 model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
-checkpointer = ModelCheckpoint('weights', monitor='val_loss', save_best_only=True)
+checkpointer = ModelCheckpoint('weights'+suffix, monitor='val_loss', save_best_only=True)
 model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, NB_EPOCH,
                          validation_data=data_generator(listX_val, listf_val), 
                          nb_val_samples=valsize, callbacks=[checkpointer])
@@ -124,4 +127,4 @@ y_test = np.concatenate( testlabels )
 evaluateModel(axarr[1], axarr[0], model_complete, 'Complete Supervision', X_test, y_test)
 evaluateModel(axarr[2], axarr[0], model_weak, 'Weak Supervision', X_test, y_test)
 
-plt.savefig('etamax%d_nbins%d_run%d'%(etamax*10,nbins,run))
+plt.savefig('plot'+suffix)
