@@ -72,7 +72,7 @@ def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
     area =  auc(fpr, tpr)
     if area<0.5:
         fpr,tpr,thres = roc_curve(~y_test, predict_proba)	
-        area =  auc(fpr, tpr)
+        area = auc(fpr, tpr)
     hist_ax.hist(predict_proba[y_test == 1], histtype='step', normed=True, 
                   label = 'signal')
     hist_ax.hist(predict_proba[y_test == 0], histtype='step',  normed=True, 
@@ -81,3 +81,4 @@ def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
     print label, area
     plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
     plot_ax.legend(loc='lower right')
+    return area

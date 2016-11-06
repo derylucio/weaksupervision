@@ -8,18 +8,19 @@ from keras import backend as K
 from theano import tensor as T
 from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve
 
-run = 1
+nruns = 30
+layersize = 10
 
 REGULARIZATION = 1e-4
 NB_EPOCH = 10
 features = ['n','w','eec2']
 etamax = 2.1
-nbins = 2
+nbins = 12
 bins = np.linspace(-2.1,2.1,nbins)
 scaler = StandardScaler()
-
-suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
 
 def getSamples(features,etamax,bins):
     filename = 'data/20161103_16h20min.root'
@@ -42,89 +43,114 @@ def getSamples(features,etamax,bins):
     output = [ [float(len(yy[yy==True]))/len(yy)]*len(yy) for yy in y]
 
     return samples,output,y
- 
-samples,fractions,labels = getSamples(features,etamax,bins)
-print 'n bins',len(labels)
-print 'sample sizes',[len(y) for y in labels]
 
-trainsamples = []
-trainlabels = []
-trainfractions = []
-testsamples = []
-testlabels = []
-for X,y,f in zip(samples,labels,fractions):
-    X_train, X_test, y_train, y_test, f_train, f_test = train_test_split(X, y, f, test_size=0.3)
-    trainsamples.append(X_train)
-    trainlabels.append(y_train)
-    trainfractions.append(f_train)
-    testsamples.append(X_test)
-    testlabels.append(y_test)
+def run(run=0): 
+    
+    suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
+    samples,fractions,labels = getSamples(features,etamax,bins)
+    print 'n bins',len(labels)
+    print 'sample sizes',[len(y) for y in labels]
+
+    trainsamples = []
+    trainlabels = []
+    trainfractions = []
+    testsamples = []
+    testlabels = []
+    for X,y,f in zip(samples,labels,fractions):
+        X_train, X_test, y_train, y_test, f_train, f_test = train_test_split(X, y, f, test_size=0.3)
+        trainsamples.append(X_train)
+        trainlabels.append(y_train)
+        trainfractions.append(f_train)
+        testsamples.append(X_test)
+        testlabels.append(y_test)
 
 ### complete supervision
-X_train = np.concatenate( trainsamples )
-y_train = np.concatenate( trainlabels )
+    X_train = np.concatenate( trainsamples )
+    y_train = np.concatenate( trainlabels )
 
-model_complete = Sequential()
-model_complete.add( Dense(3, input_dim=(X_train.shape[1]), 
-                          init='normal', activation='sigmoid') )
-model_complete.add( Dense(1, init='normal', activation='sigmoid') )
-model_complete.compile(loss='mean_squared_error', optimizer='sgd')
-history = model_complete.fit(X_train, y_train, batch_size=128, nb_epoch=NB_EPOCH, 
-                             validation_split=0.2)
+    model_complete = Sequential()
+    model_complete.add( Dense(3, input_dim=(X_train.shape[1]), 
+                              init='normal', activation='sigmoid') )
+    model_complete.add( Dense(1, init='normal', activation='sigmoid') )
+    model_complete.compile(loss='mean_squared_error', optimizer='sgd')
+    history = model_complete.fit(X_train, y_train, batch_size=128, nb_epoch=NB_EPOCH, 
+                                 validation_split=0.2)
 
 #### weak supervision
-def data_generator(samples, output):
-    num_batches = len(samples)
-    while 1:
-        for i in xrange(num_batches):
-            yield samples[i], output[i]
+    def data_generator(samples, output):
+        num_batches = len(samples)
+        while 1:
+            for i in xrange(num_batches):
+                yield samples[i], output[i]
 
-def loss_function(ytrue, ypred):
-    # Assuming that ypred contains the same ratio replicated
-    loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
-    constrib =  REGULARIZATION*K.std(ypred) 
-    loss1 = K.square(loss1) - constrib
+    def loss_function(ytrue, ypred):
+        # Assuming that ypred contains the same ratio replicated
+        loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
+        constrib =  REGULARIZATION*K.std(ypred) 
+        loss1 = K.square(loss1) - constrib
+        
+        loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
+        loss2 = K.square(loss2) - constrib
+        loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
+        return loss
+
+    listX_train = []
+    listX_val = []
+    listf_train = []
+    listf_val = []
+    for X,y,f in zip(trainsamples,trainlabels,trainfractions):
+        X_train, X_val, y_train, y_val, f_train, f_val = train_test_split(X, y, f, test_size=0.2)
+        listX_train.append(X_train)
+        listf_train.append(f_train)
+        listX_val.append(X_val)
+        listf_val.append(f_val)
     
-    loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
-    loss2 = K.square(loss2) - constrib
-    loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
-    return loss
-
-listX_train = []
-listX_val = []
-listf_train = []
-listf_val = []
-for X,y,f in zip(trainsamples,trainlabels,trainfractions):
-    X_train, X_val, y_train, y_val, f_train, f_val = train_test_split(X, y, f, test_size=0.2)
-    listX_train.append(X_train)
-    listf_train.append(f_train)
-    listX_val.append(X_val)
-    listf_val.append(f_val)
-
-trainsize = sum([X.shape[0] for X in listX_train])
-valsize = sum([X.shape[0] for X in listX_val])
-
-model_weak = Sequential()
-model_weak.add(Dense(3, input_dim=(len(features)), 
-                     init='normal', activation='sigmoid') )
-model_weak.add(Dense(1, init='normal', activation='sigmoid') )
-model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
-checkpointer = ModelCheckpoint('weights'+suffix, monitor='val_loss', save_best_only=True)
-model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, NB_EPOCH,
-                         validation_data=data_generator(listX_val, listf_val), 
-                         nb_val_samples=valsize, callbacks=[checkpointer])
+    trainsize = sum([X.shape[0] for X in listX_train])
+    valsize = sum([X.shape[0] for X in listX_val])
+    
+    model_weak = Sequential()
+    model_weak.add(Dense(layersize, input_dim=(len(features)), 
+                         init='normal', activation='sigmoid') )
+    model_weak.add(Dense(1, init='normal', activation='sigmoid') )
+    model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
+    checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', save_best_only=True)
+    model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, NB_EPOCH,
+                             validation_data=data_generator(listX_val, listf_val), 
+                             nb_val_samples=valsize, callbacks=[checkpointer])
 
 ###performance
-import matplotlib.pyplot as plt
-_, axarr = plt.subplots(3, 1)
-axarr[0].set_xlabel('Gluon Jet efficiency')
-axarr[0].set_ylabel('Quark Jet efficiency')
-axarr[1].set_xlabel('probability')
-axarr[2].set_xlabel('probability')
+    _, axarr = plt.subplots(3, 1)
+    axarr[0].set_xlabel('Gluon Jet efficiency')
+    axarr[0].set_ylabel('Quark Jet efficiency')
+    axarr[1].set_xlabel('probability')
+    axarr[2].set_xlabel('probability')
 
-X_test = np.concatenate( testsamples )
-y_test = np.concatenate( testlabels )
-evaluateModel(axarr[1], axarr[0], model_complete, 'Complete Supervision', X_test, y_test)
-evaluateModel(axarr[2], axarr[0], model_weak, 'Weak Supervision', X_test, y_test)
+    X_test = np.concatenate( testsamples )
+    y_test = np.concatenate( testlabels )
+    auc_sup = evaluateModel(axarr[1], axarr[0], model_complete, 'Complete Supervision', X_test, y_test)
+    auc_weak = evaluateModel(axarr[2], axarr[0], model_weak, 'Weak Supervision', X_test, y_test)
 
-plt.savefig('plot'+suffix)
+    for X in X_test.T:
+        fpr,tpr,thres = roc_curve(y_test, X.T)
+        axarr[0].plot(1-fpr, 1-tpr, linestyle='--', label='reference')
+    
+    plt.savefig('plot'+suffix)
+    plt.clf()
+    return auc_sup,auc_weak
+
+aucs_sup = []
+aucs_weak = []
+runs = range(nruns)
+for runnum in runs:
+    auc_sup,auc_weak = run(runnum)
+    aucs_sup.append(auc_sup)
+    aucs_weak.append(auc_weak)
+
+plt.plot(runs,aucs_sup,label='complete supervision')
+plt.plot(runs,aucs_weak,label='weak supervision')
+plt.ylabel('AUC')
+plt.xlabel('run')
+plt.ylim([0.5,1.0])
+plt.legend(loc='lower right',title='hidden layer size: %d'%layersize)
+plt.savefig('summary_auc_%d'%layersize)
+
