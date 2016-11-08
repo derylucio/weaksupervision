@@ -11,7 +11,7 @@ from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
 
-nruns = 30
+nruns = 10
 layersize = 10
 
 REGULARIZATION = 1e-4
@@ -23,7 +23,7 @@ bins = np.linspace(-2.1,2.1,nbins)
 scaler = StandardScaler()
 
 def getSamples(features,etamax,bins):
-    filename = 'data/20161103_16h20min.root'
+    filename = 'data/20161106_19h36min.root'
     id0 = getjetvar('j0','id',filename)
     eta0 = getjetvar('j0','eta',filename)
     eta1 = getjetvar('j1','eta',filename)
