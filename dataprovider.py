@@ -15,6 +15,8 @@ def getSamples(features,etamax,bins):
     id0 = id0[(np.fabs(eta0)<etamax) & (np.fabs(eta1)<etamax)]
     deta0 = deta0[(np.fabs(eta0)<etamax) & (np.fabs(eta1)<etamax)]
     X = X[(np.fabs(eta0)<etamax) & (np.fabs(eta1)<etamax)]
+    print X[id0<6].mean(axis=0),X[id0<6].std(axis=0)
+    print X[id0==21].mean(axis=0),X[id0==21].std(axis=0)
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     labels = id0<6
@@ -27,21 +29,24 @@ def getSamples(features,etamax,bins):
 
 def getToys(means,stds,fractions):
     samplesize = 20000
-    signal = []
-    bckg = []
+    samples = []
+    labels = []
+    scaler = StandardScaler()
     for f in fractions:
-        signal.append(
-            np.stack([
-                    np.random.normal(mu,sigma,samplesize*f)
-                    for mu[0],sigma[0] in zip(means,stds)
-                    ])
-            )#signal
-        bckg.append(
-            np.stack([
-                    np.random.normal(mu,sigma,samplesize)
-                    for mu[1],sigma[1] in zip(means,stds)
-                    ])
-            )#signal
-    y = fractions
-    return samples,output,y
+        signal = np.stack([
+                np.random.normal(mu[0],sigma[0],int(samplesize*f))
+                for mu,sigma in zip(means,stds)
+                ]).T
+        bckg = np.stack([
+                np.random.normal(mu[1],sigma[1],int(samplesize*(1-f)))
+                for mu,sigma in zip(means,stds)
+                ]).T
+        X = np.concatenate([signal,bckg])
+        X = scaler.fit_transform(X)
+        samples.append( X )
+        y = np.array( [True for x in signal]+[False for x in bckg] )
+        labels.append(y)
+    output = [ [float(len(yy[yy==True]))/len(yy)]*len(yy) for yy in labels]
+        
+    return samples,output,labels
 
