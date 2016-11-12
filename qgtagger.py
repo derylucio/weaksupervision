@@ -7,7 +7,7 @@ from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
 nruns = 10
-layersize = 10
+layersize = 30
 
 NB_EPOCH = 10
 NB_EPOCH_weak = 30
@@ -64,7 +64,7 @@ def run(run=0):
         fpr,tpr,thres = roc_curve(y_test, X.T)
         axarr[0].plot(1-fpr, 1-tpr, linestyle='--', label='reference')
     
-    plt.savefig('plot'+suffix)
+    plt.savefig('toy_plots/plot'+suffix)
     plt.clf()
     return auc_sup,auc_weak
 
@@ -82,5 +82,5 @@ plt.ylabel('AUC')
 plt.xlabel('run')
 plt.ylim([0.5,1.0])
 plt.legend(loc='lower right',title='hidden layer size: %d'%layersize)
-plt.savefig('summary_auc_%d'%layersize)
+plt.savefig('toy_plots/summary_auc_%d'%layersize)
 

@@ -68,10 +68,11 @@ def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
     predict_proba = model.predict_proba(x_test)
     print label, 'min', min(predict_proba)
     print label, 'max', max(predict_proba)
+    print label,  'mean', np.mean(predict_proba)
     fpr,tpr,thres = roc_curve(y_test, predict_proba)	
     area =  auc(fpr, tpr)
     if area<0.5:
-        fpr,tpr,thres = roc_curve(~y_test, predict_proba)	
+        fpr,tpr,thres = roc_curve(y_test, 1 - predict_proba)	
         area = auc(fpr, tpr)
     hist_ax.hist(predict_proba[y_test == 1], histtype='step', normed=True, 
                   label = 'signal')

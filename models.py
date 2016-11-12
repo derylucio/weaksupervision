@@ -6,8 +6,10 @@ from theano import tensor as T
 from sklearn.cross_validation import train_test_split
 from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
+from keras.regularizers import l2, l1
 
-REGULARIZATION = 1e-4
+REGULARIZATION = 5e-3
+WEIGHT_REGULARIZATION = 5e-1
 
 def traincomplete(trainsamples,trainlabels,nb_epoch):
     X_train = np.concatenate( trainsamples )
@@ -56,8 +58,8 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix):
     
     model_weak = Sequential()
     model_weak.add(Dense(layersize, input_dim=(trainsamples[0].shape[1]), 
-                         init='normal', activation='sigmoid') )
-    model_weak.add(Dense(1, init='normal', activation='sigmoid') )
+                         init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
+    model_weak.add(Dense(1, init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
     model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
     checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', save_best_only=True)
     model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, nb_epoch,
