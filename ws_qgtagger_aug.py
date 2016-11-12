@@ -15,7 +15,7 @@ from theano import tensor as T
 matplotlib.use('pdf')
 # scan the number of examples
 # understand why current example does worse than random.
-run = "4"
+run = "1"
 SAMPLES_PER_EPOCH = 512000
 NB_EPOCH = 10
 NB_VAL_SAMPLES = 12800
@@ -23,7 +23,7 @@ BATCH_SIZE = 4096
 NUM_FEATURES = 3
 FRACTIONS = [0.2, 0.3] #[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 NUM_TEST_SAMPLES = 10000
-STD_IMP = 1e-3
+STD_IMP = 1e-4
 scaler = StandardScaler()
 
 def generateTrainSamples(totalSamples):
