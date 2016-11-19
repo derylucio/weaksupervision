@@ -3,13 +3,13 @@ import numpy as np
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve
-from dataprovider import getSamples,getToys
+from dataprovider import getSamples,getInclSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 10
+nruns = 1
 layersize = 30
 
-NB_EPOCH = 10
+NB_EPOCH = 50
 NB_EPOCH_weak = 30
 features = ['n','w','eec2']
 etamax = 2.1
@@ -18,14 +18,15 @@ bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
-toyfractions = [0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
+toyfractions = [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]
 def run(run=0): 
     
     suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
     if usetoys:
         samples,fractions,labels = getToys(toymeans,toystds,toyfractions)
     else:
-        samples,fractions,labels = getSamples(features,etamax,bins)
+#        samples,fractions,labels = getSamples(features,etamax,bins)
+        samples,fractions,labels = getInclSamples(features,etamax,nbins)
     print 'n bins',len(labels)
     print 'sample sizes',[len(y) for y in labels]
 
@@ -43,9 +44,11 @@ def run(run=0):
         testlabels.append(y_test)
 
 ### complete supervision
+    print 'complete supervision'
     model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
     
 #### weak supervision
+    print 'weak supervision'
     model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix)
 
 ###performance

@@ -24,6 +24,19 @@ def traincomplete(trainsamples,trainlabels,nb_epoch):
                                  validation_split=0.2)
     return model_complete
 
+def trainqgcomplete(trainsamples,trainlabels,nb_epoch):
+    X_train = np.concatenate( trainsamples )
+    y_train = np.concatenate( trainlabels )
+    
+    model_complete = Sequential()
+    model_complete.add( Dense(10, input_dim=(X_train.shape[1]), 
+                              init='normal', activation='sigmoid') )
+    model_complete.add( Dense(1, init='normal', activation='sigmoid') )
+    model_complete.compile(loss='mean_squared_error', optimizer='sgd')
+    history = model_complete.fit(X_train, y_train, batch_size=128, nb_epoch=nb_epoch, 
+                                 validation_split=0.2)
+    return model_complete
+
 def data_generator(samples, output):
     num_batches = len(samples)
     while 1:
