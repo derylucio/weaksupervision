@@ -5,10 +5,10 @@ from sklearn.metrics import roc_curve,auc
 from dataprovider import getInclToys
 from models import trainweak
 
-nruns = 1
+nruns = 30
 layersize = 10
-NB_EPOCH_weak = 200
-nbins = [10]
+NB_EPOCH_weak = 30
+nbins = [1,10,50,100,200]
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
 fraction = 0.6
@@ -30,7 +30,8 @@ def run(nsamples):
         testsamples.append(X_test)
         testlabels.append(y_test)
 
-    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak)
+    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,
+                           l2reg=5e-1,sdreg=1e-3)
 
     X_test = np.concatenate( testsamples )
     y_test = np.concatenate( testlabels )
@@ -43,7 +44,21 @@ def run(nsamples):
         area = auc(fpr, tpr)
     return area
 
-aucs = []
+means = []
+stds = []
 for nsamples in nbins:
+    print nsamples
     aucs = [run(nsamples) for i in range(nruns)]
-    print aucs
+#    print aucs
+    means.append(np.mean(aucs))
+    stds.append(np.std(aucs))
+
+plt.plot(nbins,stds)
+plt.xlabel('# of samples')
+plt.ylabel('$\sigma(AUC)$')
+plt.savefig('paper_plots/sigmavsnsamples.png')
+plt.clf()
+plt.plot(nbins,means)
+plt.xlabel('# of samples')
+plt.ylabel('$<AUC>$')
+plt.savefig('paper_plots/meanvsnsamples.png')

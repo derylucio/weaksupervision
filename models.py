@@ -8,9 +8,6 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 from keras.regularizers import l2, l1
 
-REGULARIZATION = 5e-3
-WEIGHT_REGULARIZATION = 5e-1
-
 def traincomplete(trainsamples,trainlabels,nb_epoch):
     X_train = np.concatenate( trainsamples )
     y_train = np.concatenate( trainlabels )
@@ -42,19 +39,8 @@ def data_generator(samples, output):
     while 1:
         for i in xrange(num_batches):
             yield samples[i], output[i]
-            
-def loss_function(ytrue, ypred):
-    # Assuming that ypred contains the same ratio replicated
-    loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
-    constrib =  REGULARIZATION*K.std(ypred) 
-    loss1 = K.square(loss1) - constrib
-    
-    loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
-    loss2 = K.square(loss2) - constrib
-    loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
-    return loss
 
-def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix=''):
+def trainweak(trainsamples,trainfractions,layersize,nb_epoch,l2reg=0,sdreg=0,suffix=''):
     listX_train = []
     listX_val = []
     listf_train = []
@@ -68,14 +54,30 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix=''):
     
     trainsize = sum([X.shape[0] for X in listX_train])
     valsize = sum([X.shape[0] for X in listX_val])
+
+    def loss_function(ytrue, ypred):
+        # Assuming that ypred contains the same ratio replicated
+        loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
+        constrib = sdreg*K.std(ypred) 
+        loss1 = K.square(loss1) - constrib
+        
+        loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
+        loss2 = K.square(loss2) - constrib
+        loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
+        return loss
     
     model_weak = Sequential()
     model_weak.add(Dense(layersize, input_dim=(trainsamples[0].shape[1]), 
-                         init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
-    model_weak.add(Dense(1, init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
+                         init='normal', activation='sigmoid', 
+                         W_regularizer=l2(l2reg)) )
+    model_weak.add(Dense(1, init='normal', activation='sigmoid'
+                         #, W_regularizer=l2(l2reg)
+                         ))
     model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
-    checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', save_best_only=True)
-    model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, nb_epoch,
+    checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', 
+                                   save_best_only=True)
+    model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, 
+                             nb_epoch,
                              validation_data=data_generator(listX_val, listf_val), 
                              nb_val_samples=valsize, callbacks=[checkpointer])
 
