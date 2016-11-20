@@ -54,7 +54,7 @@ def loss_function(ytrue, ypred):
     loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
     return loss
 
-def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix):
+def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix=''):
     listX_train = []
     listX_val = []
     listf_train = []
