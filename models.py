@@ -40,6 +40,28 @@ def data_generator(samples, output):
         for i in xrange(num_batches):
             yield samples[i], output[i]
 
+def getweak(inputsize,layersize,l2reg=0,sdreg=0):
+    def loss_function(ytrue, ypred):
+        # Assuming that ypred contains the same ratio replicated
+        loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
+        constrib = sdreg*K.std(ypred) 
+        loss1 = K.square(loss1) - constrib
+        
+        loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
+        loss2 = K.square(loss2) - constrib
+        loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
+        return loss
+    
+    model_weak = Sequential()
+    model_weak.add(Dense(layersize, input_dim=(inputsize), 
+                         init='normal', activation='sigmoid', 
+                         W_regularizer=l2(l2reg)) )
+    model_weak.add(Dense(1, init='normal', activation='sigmoid'
+                         ))
+    model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
+    
+    return model_weak
+
 def trainweak(trainsamples,trainfractions,layersize,nb_epoch,l2reg=0,sdreg=0,suffix=''):
     listX_train = []
     listX_val = []
@@ -55,30 +77,15 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,l2reg=0,sdreg=0,suf
     trainsize = sum([X.shape[0] for X in listX_train])
     valsize = sum([X.shape[0] for X in listX_val])
 
-    def loss_function(ytrue, ypred):
-        # Assuming that ypred contains the same ratio replicated
-        loss1 = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
-        constrib = sdreg*K.std(ypred) 
-        loss1 = K.square(loss1) - constrib
-        
-        loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
-        loss2 = K.square(loss2) - constrib
-        loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
-        return loss
-    
-    model_weak = Sequential()
-    model_weak.add(Dense(layersize, input_dim=(trainsamples[0].shape[1]), 
-                         init='normal', activation='sigmoid', 
-                         W_regularizer=l2(l2reg)) )
-    model_weak.add(Dense(1, init='normal', activation='sigmoid'
-                         #, W_regularizer=l2(l2reg)
-                         ))
-    model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
-    checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', 
-                                   save_best_only=True)
+    inputsize = trainsamples[0].shape[1]
+    model_weak = getweak(inputsize,layersize,l2reg,sdreg)
+#    checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', 
+#                                   save_best_only=True)
     model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, 
                              nb_epoch,
                              validation_data=data_generator(listX_val, listf_val), 
-                             nb_val_samples=valsize, callbacks=[checkpointer])
+                             nb_val_samples=valsize
+                             #, callbacks=[checkpointer]
+                             )
 
     return model_weak
