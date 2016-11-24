@@ -6,7 +6,7 @@ from dataprovider import getInclToys
 from models import getweak
 
 nruns = 100
-nbins = [1,5,10,15,20,50,100]
+nbins = [1,3,5,8,10,12,15,18,20,25,30,50,100]
 layersize = 10
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
