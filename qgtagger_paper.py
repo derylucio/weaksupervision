@@ -11,12 +11,12 @@ layersize = 30
 
 NB_EPOCH = 150
 NB_EPOCH_weak = 30
-features = ['n','w','neff']
+features = ['n','w','f0']
 etamax = 2.1
 nbins = 12
 def run(): 
     
-    samples,fractions,labels = getInclSamples(features,etamax,nbins)
+    samples,fractions,labels = getInclSamples(features,etamax,nbins,'data/default.root')
     print 'n bins',len(labels)
     print 'sample sizes',[len(y) for y in labels]
 
@@ -37,7 +37,8 @@ def run():
     model_complete = trainqgcomplete(trainsamples,trainlabels,NB_EPOCH)
     
 #### weak supervision
-    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,'paper')
+    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,
+                           l2reg=5e-1,sdreg=1e-3,suffix='paper')
 
 ###performance
     X_test = np.concatenate( testsamples )
@@ -59,6 +60,9 @@ def run():
     for X,f in zip(X_test.T,features):
         fpr,tpr,thres = roc_curve(y_test, -1*X.T)
         area = auc(fpr, tpr)
+        if area<0.5:
+            fpr,tpr,thres = roc_curve(y_test, X.T)	
+            area = auc(fpr, tpr)
         plt.plot(fpr, tpr, linestyle='--', label=f+', AUC=%1.2f'%area)
     
     plt.xlabel('Gluon Jet efficiency')

@@ -27,8 +27,8 @@ def getSamples(features,etamax,bins):
 
     return samples,output,y
 
-def getInclSamples(features,etamax,nsamples):
-    filename = 'data/20161118_12h40min.root'
+def getInclSamples(features,etamax,nsamples,_filename='data/default.root'):
+    filename = _filename
     id0 = getjetvar('j0','id',filename)
     eta0 = getjetvar('j0','eta',filename)
     eta1 = getjetvar('j1','eta',filename)
