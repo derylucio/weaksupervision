@@ -6,10 +6,10 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 10
+nruns = 5
 layersize = 30
 
-NB_EPOCH = 10
+NB_EPOCH = 40
 NB_EPOCH_weak = 30
 features = ['n','w','eec2']
 etamax = 2.1
@@ -19,6 +19,7 @@ usetoys = True
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
 toyfractions = [0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
+
 def run(run=0): 
     
     suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
@@ -47,40 +48,33 @@ def run(run=0):
     
 #### weak supervision
     model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix)
-
-###performance
-    _, axarr = plt.subplots(3, 1)
-    axarr[0].set_xlabel('Gluon Jet efficiency')
-    axarr[0].set_ylabel('Quark Jet efficiency')
-    axarr[1].set_xlabel('probability')
-    axarr[2].set_xlabel('probability')
-
     X_test = np.concatenate( testsamples )
     y_test = np.concatenate( testlabels )
-    auc_sup = evaluateModel(axarr[1], axarr[0], model_complete, 'Complete Supervision', X_test, y_test)
-    auc_weak = evaluateModel(axarr[2], axarr[0], model_weak, 'Weak Supervision', X_test, y_test)
+    auc_sup = None
+    if run == 0:
+        auc_sup = evaluateModel(None, plt, model_complete, 'Complete Supervision', X_test, y_test)
+    auc_weak = evaluateModel(None, plt, model_weak, 'Weak Supervision', X_test, y_test)
+    return auc_sup, auc_weak
 
-    for X in X_test.T:
-        fpr,tpr,thres = roc_curve(y_test, X.T)
-        axarr[0].plot(1-fpr, 1-tpr, linestyle='--', label='reference')
-    
-    plt.savefig('toy_plots/plot'+suffix)
-    plt.clf()
-    return auc_sup,auc_weak
-
+SetupATLAS()
 aucs_sup = []
 aucs_weak = []
 runs = range(nruns)
+plt.xlabel("False Positive")
+plt.ylabel("True Positive")
+plt.ylim([0,1.7])
 for runnum in runs:
     auc_sup,auc_weak = run(runnum)
     aucs_sup.append(auc_sup)
     aucs_weak.append(auc_weak)
 
-plt.plot(runs,aucs_sup,label='complete supervision')
-plt.plot(runs,aucs_weak,label='weak supervision')
-plt.ylabel('AUC')
-plt.xlabel('run')
-plt.ylim([0.5,1.0])
-plt.legend(loc='lower right',title='hidden layer size: %d'%layersize)
-plt.savefig('toy_plots/summary_auc_%d'%layersize)
+plt.legend(loc='upper left', frameon=True)
+plt.savefig('plots/no_reg_flip_only')
+
+# plt.plot(runs,aucs_sup,label='complete supervision')
+# plt.plot(runs,aucs_weak,label='weak supervision')
+# plt.ylabel('AUC')
+# plt.xlabel('run')
+# plt.legend(loc='upper left',title='hidden layer size: %d'%layersize)
+# plt.savefig('plots/summary_auc_%d'%layersize)
 

@@ -8,8 +8,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 from keras.regularizers import l2, l1
 
-REGULARIZATION = 5e-3
-WEIGHT_REGULARIZATION = 5e-1
+REGULARIZATION = 0 #5e-3
+WEIGHT_REGULARIZATION = 0#5e-3
 
 def traincomplete(trainsamples,trainlabels,nb_epoch):
     X_train = np.concatenate( trainsamples )

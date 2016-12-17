@@ -1,6 +1,6 @@
-import rootpy
-from rootpy.plotting.style import get_style, set_style
-from matplotlib import rc
+# import rootpy
+# from rootpy.plotting.style import get_style, set_style
+# from matplotlib import rc
 def SetupATLAS():
     rootpy.log.basic_config_colorized()
     #use latex for text
@@ -64,22 +64,20 @@ def getpairflav(id0,id1):
 from pylab import *
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
-def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
+def evaluateModel(hist_ax, plot_ax, flip,  model, label, x_test, y_test):
     predict_proba = model.predict_proba(x_test)
     print label, 'min', min(predict_proba)
     print label, 'max', max(predict_proba)
     print label,  'mean', np.mean(predict_proba)
     fpr,tpr,thres = roc_curve(y_test, predict_proba)	
     area =  auc(fpr, tpr)
-    if area<0.5:
+    if flip and (area < 0.5):
         fpr,tpr,thres = roc_curve(y_test, 1 - predict_proba)	
         area = auc(fpr, tpr)
-    hist_ax.hist(predict_proba[y_test == 1], histtype='step', normed=True, 
-                  label = 'signal')
-    hist_ax.hist(predict_proba[y_test == 0], histtype='step',  normed=True, 
-                  label = 'background')
-    hist_ax.legend(title=label)
     print label, area
-    plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
+    if label == 'Complete Supervision':
+        plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
+    else:
+        plot_ax.plot(fpr, tpr, linestyle='--', label=label+', auc=%1.2f'%area)
     plot_ax.legend(loc='lower right')
     return area
