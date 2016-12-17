@@ -1,4 +1,4 @@
-from utils import evaluateModel
+from utils import evaluateModel #,SetupATLAS
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
@@ -52,11 +52,11 @@ def run(run=0):
     y_test = np.concatenate( testlabels )
     auc_sup = None
     if run == 0:
-        auc_sup = evaluateModel(None, plt, model_complete, 'Complete Supervision', X_test, y_test)
-    auc_weak = evaluateModel(None, plt, model_weak, 'Weak Supervision', X_test, y_test)
+        auc_sup = evaluateModel(None, plt, False, model_complete, 'Complete Supervision', X_test, y_test)
+    auc_weak = evaluateModel(None, plt, False, model_weak, 'Weak Supervision', X_test, y_test)
     return auc_sup, auc_weak
 
-SetupATLAS()
+# SetupATLAS()
 aucs_sup = []
 aucs_weak = []
 runs = range(nruns)
@@ -69,7 +69,7 @@ for runnum in runs:
     aucs_weak.append(auc_weak)
 
 plt.legend(loc='upper left', frameon=True)
-plt.savefig('plots/no_reg_flip_only')
+plt.savefig('plots/No-Regularization-Flipped')
 
 # plt.plot(runs,aucs_sup,label='complete supervision')
 # plt.plot(runs,aucs_weak,label='weak supervision')
