@@ -16,9 +16,9 @@ etamax = 2.1
 nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
-toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
-toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
-toyfractions = [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]
+toymeans = [(18,30)]
+toystds  = [(20,500)]
+toyfractions = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.2, 0.1, 0.4, 0.4]
 def run(run=0): 
     
     suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
@@ -49,7 +49,7 @@ def run(run=0):
     
 #### weak supervision
     print 'weak supervision'
-    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix)
+    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,l2reg=5e-1,sdreg=0,suffix=suffix)
 
 ###performance
     _, axarr = plt.subplots(3, 1)
