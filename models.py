@@ -1,6 +1,6 @@
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense,Dropout
 from keras import backend as K
 from theano import tensor as T
 from sklearn.cross_validation import train_test_split
@@ -13,9 +13,12 @@ def traincomplete(trainsamples,trainlabels,nb_epoch):
     y_train = np.concatenate( trainlabels )
     
     model_complete = Sequential()
-    model_complete.add( Dense(3, input_dim=(X_train.shape[1]), 
-                              init='normal', activation='sigmoid') )
-    model_complete.add( Dense(1, init='normal', activation='sigmoid') )
+    model_complete.add( Dense(64, input_dim=(X_train.shape[1]), 
+                              init='uniform', activation='relu') )
+    model_complete.add(Dropout(0.5))
+    model_complete.add(Dense(64,activation='relu'))
+    model_complete.add(Dropout(0.5))
+    model_complete.add( Dense(1, activation='sigmoid') )
     model_complete.compile(loss='mean_squared_error', optimizer='sgd')
     history = model_complete.fit(X_train, y_train, batch_size=128, nb_epoch=nb_epoch, 
                                  validation_split=0.2)
@@ -50,13 +53,16 @@ def getweak(inputsize,layersize,l2reg=0,sdreg=0):
         loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
         loss2 = K.square(loss2) - constrib
         loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
-        return loss1
+        return loss
     
     model_weak = Sequential()
-    model_weak.add(Dense(layersize, input_dim=(inputsize), 
-                         init='normal', activation='sigmoid', 
+    model_weak.add(Dense(64, input_dim=(inputsize), 
+                         init='uniform', activation='relu', 
                          W_regularizer=l2(l2reg)) )
-    model_weak.add(Dense(1, init='normal', activation='sigmoid'
+    model_weak.add(Dropout(0.5))
+    model_weak.add(Dense(64, activation='relu', W_regularizer=l2(l2reg)) )
+    model_weak.add(Dropout(0.5))
+    model_weak.add(Dense(1, activation='sigmoid'
                          ))
     model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
     
