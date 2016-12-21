@@ -6,7 +6,7 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 5
+nruns = 1
 layersize = 30
 
 NB_EPOCH = 40
@@ -52,8 +52,8 @@ def run(run=0):
     y_test = np.concatenate( testlabels )
     auc_sup = None
     if run == 0:
-        auc_sup = evaluateModel(None, plt, False, model_complete, 'Complete Supervision', X_test, y_test)
-    auc_weak = evaluateModel(None, plt, False, model_weak, 'Weak Supervision', X_test, y_test)
+        auc_sup = evaluateModel(None, plt, True, model_complete, 'Complete Supervision', X_test, y_test)
+    auc_weak = evaluateModel(None, plt, True, model_weak, 'Weak Supervision', X_test, y_test)
     return auc_sup, auc_weak
 
 # SetupATLAS()
@@ -62,14 +62,14 @@ aucs_weak = []
 runs = range(nruns)
 plt.xlabel("False Positive")
 plt.ylabel("True Positive")
-plt.ylim([0,1.7])
+plt.ylim([0,1.5])
 for runnum in runs:
     auc_sup,auc_weak = run(runnum)
     aucs_sup.append(auc_sup)
     aucs_weak.append(auc_weak)
 
 plt.legend(loc='upper left', frameon=True)
-plt.savefig('plots/No-Regularization-Flipped')
+plt.savefig('plots/WeakSupervision')
 
 # plt.plot(runs,aucs_sup,label='complete supervision')
 # plt.plot(runs,aucs_weak,label='weak supervision')
