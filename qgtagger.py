@@ -6,11 +6,11 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 1
+nruns = 4
 layersize = 30
 
 NB_EPOCH = 40
-NB_EPOCH_weak = 30
+NB_EPOCH_weak = 50
 features = ['n','w','eec2']
 etamax = 2.1
 nbins = 12
@@ -18,10 +18,9 @@ bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
-toyfractions = [0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
+toyfractions = [0.2, 0.9]*15 #[0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
 
-def run(run=0): 
-    
+def run(learning_rate, run=0): 
     suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
     if usetoys:
         samples,fractions,labels = getToys(toymeans,toystds,toyfractions)
@@ -47,30 +46,40 @@ def run(run=0):
     model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
     
 #### weak supervision
-    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix)
+    model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix, learning_rate)
     X_test = np.concatenate( testsamples )
     y_test = np.concatenate( testlabels )
     auc_sup = None
     if run == 0:
-        auc_sup = evaluateModel(None, plt, True, model_complete, 'Complete Supervision', X_test, y_test)
-    auc_weak = evaluateModel(None, plt, True, model_weak, 'Weak Supervision', X_test, y_test)
+        auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision', X_test, y_test)
+    auc_weak = evaluateModel(None, plt, model_weak, 'WeakSupervision', X_test, y_test)
     return auc_sup, auc_weak
 
 # SetupATLAS()
-aucs_sup = []
-aucs_weak = []
+learning_rates = [9e-3]
+colors = ['r', 'g', 'b', 'c', 'k', 'm']
+all_weak_aucs = []
 runs = range(nruns)
-plt.xlabel("False Positive")
-plt.ylabel("True Positive")
-plt.ylim([0,1.5])
-for runnum in runs:
-    auc_sup,auc_weak = run(runnum)
-    aucs_sup.append(auc_sup)
-    aucs_weak.append(auc_weak)
-
-plt.legend(loc='upper left', frameon=True)
-plt.savefig('plots/WeakSupervision')
-
+for index, lr in enumerate(learning_rates):
+    plt.xlabel("False Positive")
+    plt.ylabel("True Positive")
+    plt.ylim([0,1.7])
+    aucs_weak = []
+    aucs_sup = []
+    for runnum in runs:
+        auc_sup,auc_weak = run(lr, run=runnum)
+        aucs_sup.append(auc_sup)
+        aucs_weak.append(auc_weak)
+    all_weak_aucs.append(aucs_weak)
+    plt.legend(loc='upper left', title='Trained on Data Fractions [0.2, 0.7]', frameon=True)
+    plt.savefig('plots/WeakSupervision' + str(index))
+    plt.close()
+plt.xlabel("run")
+plt.ylabel("auc")
+for index, lr in enumerate(learning_rates):
+    plt.plot(all_weak_aucs[index], color=colors[index], label=str(lr))
+plt.legend(loc='lower right', frameon=True)
+plt.savefig('plots/stability_lr_study')
 # plt.plot(runs,aucs_sup,label='complete supervision')
 # plt.plot(runs,aucs_weak,label='weak supervision')
 # plt.ylabel('AUC')

@@ -64,14 +64,17 @@ def getpairflav(id0,id1):
 from pylab import *
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
-def evaluateModel(hist_ax, plot_ax, flip,  model, label, x_test, y_test):
+def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
     predict_proba = model.predict_proba(x_test)
     print label, 'min', min(predict_proba)
     print label, 'max', max(predict_proba)
     print label,  'mean', np.mean(predict_proba)
-    fpr,tpr,thres = roc_curve(y_test, predict_proba)	
+    fpr,tpr,thres = roc_curve(y_test, predict_proba)
+    np.save('proba' + label, predict_proba)
+    np.save('ytest', y_test)	
     area =  auc(fpr, tpr)
-    if flip and (area < 0.5):
+    if area < 0.5:
+        print 'Flipped'
         fpr,tpr,thres = roc_curve(y_test, 1 - predict_proba)	
         area = auc(fpr, tpr)
     print label, area
@@ -79,5 +82,4 @@ def evaluateModel(hist_ax, plot_ax, flip,  model, label, x_test, y_test):
         plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
     else:
         plot_ax.plot(fpr, tpr, linestyle='--', label=label+', auc=%1.2f'%area)
-    plot_ax.legend(loc='lower right')
     return area

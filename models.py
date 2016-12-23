@@ -8,8 +8,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 from keras.regularizers import l2, l1
 
-REGULARIZATION = 5e-3
-WEIGHT_REGULARIZATION = 5e-3
+REGULARIZATION = 0 #5e-3
+WEIGHT_REGULARIZATION = 0 #5e-3
 
 def traincomplete(trainsamples,trainlabels,nb_epoch):
     X_train = np.concatenate( trainsamples )
@@ -41,7 +41,7 @@ def loss_function(ytrue, ypred):
     loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
     return loss
 
-def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix):
+def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix, learning_rate):
     listX_train = []
     listX_val = []
     listf_train = []
@@ -59,11 +59,11 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix):
     model_weak = Sequential()
     model_weak.add(Dense(layersize, input_dim=(trainsamples[0].shape[1]), 
                          init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
-    model_weak.add(Dense(1, init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
-    model_weak.compile(loss=loss_function, optimizer=Adam(lr=0.001))
+    model_weak.add(Dense(1, init='normal', activation='sigmoid') )
+    model_weak.compile(loss=loss_function, optimizer=Adam(lr=learning_rate))
     checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', save_best_only=True)
     model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, nb_epoch,
                              validation_data=data_generator(listX_val, listf_val), 
                              nb_val_samples=valsize, callbacks=[checkpointer])
-
+    model_weak.load_weights('weights'+suffix+'.h5')
     return model_weak
