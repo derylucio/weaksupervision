@@ -5,6 +5,7 @@ from keras import backend as K
 from theano import tensor as T
 from sklearn.cross_validation import train_test_split
 from keras.callbacks import ModelCheckpoint
+from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from keras.regularizers import l2, l1
 
@@ -62,6 +63,7 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix, learning_ra
     model_weak.add(Dense(1, init='normal', activation='sigmoid') )
     model_weak.compile(loss=loss_function, optimizer=Adam(lr=learning_rate))
     checkpointer = ModelCheckpoint('weights'+suffix+'.h5', monitor='val_loss', save_best_only=True)
+    earlystopper = EarlyStopping(monitor="val_loss", patience=2)
     model_weak.fit_generator(data_generator(listX_train, listf_train), trainsize, nb_epoch,
                              validation_data=data_generator(listX_val, listf_val), 
                              nb_val_samples=valsize, callbacks=[checkpointer])

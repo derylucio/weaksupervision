@@ -6,7 +6,7 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 4
+nruns = 1
 layersize = 30
 
 NB_EPOCH = 40
@@ -35,24 +35,32 @@ def run(learning_rate, run=0):
     testsamples = []
     testlabels = []
     for X,y,f in zip(samples,labels,fractions):
-        X_train, X_test, y_train, y_test, f_train, f_test = train_test_split(X, y, f, test_size=0.3)
-        trainsamples.append(X_train)
-        trainlabels.append(y_train)
-        trainfractions.append(f_train)
-        testsamples.append(X_test)
-        testlabels.append(y_test)
+        # X_train, X_test, y_train, y_test, f_train, f_test = train_test_split(X, y, f, test_size=0.3)
+        trainsamples.append(X)
+        trainlabels.append(y)
+        trainfractions.append(f)
+    
+    test_samples1, _, test_labels1 = getToys(toymeans,toystds,[0.5, 0.5])
+    test_samples2, _, test_labels2 = getToys(toymeans,toystds,[0.1, 0.9])
+
 
 ### complete supervision
     model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
     
 #### weak supervision
     model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix, learning_rate)
-    X_test = np.concatenate( testsamples )
-    y_test = np.concatenate( testlabels )
+    X_test1 = np.concatenate( test_samples1 )
+    y_test1 = np.concatenate( test_labels1 )
+    X_test2 = np.concatenate( test_samples2 )
+    y_test2 = np.concatenate( test_labels2 )
     auc_sup = None
+    print 'Lengths : ', len(y_test1), len(y_test2)
+    print 'Fracs : ', sum(y_test1), sum(y_test2)
     if run == 0:
-        auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision', X_test, y_test)
-    auc_weak = evaluateModel(None, plt, model_weak, 'WeakSupervision', X_test, y_test)
+        auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision55', X_test1, y_test1)
+        auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision28', X_test2, y_test2)
+    auc_weak = evaluateModel(None, plt, model_weak, 'WeakSupervision55', X_test1, y_test1)
+    auc_weak = evaluateModel(None, plt, model_weak, 'WeakSupervision28', X_test2, y_test2)
     return auc_sup, auc_weak
 
 # SetupATLAS()
@@ -71,8 +79,8 @@ for index, lr in enumerate(learning_rates):
         aucs_sup.append(auc_sup)
         aucs_weak.append(auc_weak)
     all_weak_aucs.append(aucs_weak)
-    plt.legend(loc='upper left', title='Trained on Data Fractions [0.2, 0.7]', frameon=True)
-    plt.savefig('plots/WeakSupervision' + str(index))
+    plt.legend(loc='upper left', title='Trained on Data Fractions [0.2, 0.8]', frameon=True)
+    plt.savefig('plots/WeakSupervision_TT_check' + str(index))
     plt.close()
 plt.xlabel("run")
 plt.ylabel("auc")
