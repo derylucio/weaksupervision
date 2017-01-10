@@ -40,7 +40,7 @@ def loss_function(ytrue, ypred):
     loss2 = (1.0 - K.sum(ypred)/ypred.shape[0]) - K.sum(ytrue)/ypred.shape[0]
     loss2 = K.square(loss2) - constrib
     loss = K.switch(T.lt(loss1, loss2), loss1, loss2)
-    return loss
+    return loss1
 
 def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix, learning_rate):
     listX_train = []

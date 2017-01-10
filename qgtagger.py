@@ -6,7 +6,7 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 1
+nruns = 50
 layersize = 30
 
 NB_EPOCH = 40
@@ -18,10 +18,10 @@ bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
-toyfractions = [0.2, 0.9]*15 #[0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
+toyfractions =  [0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]*2 #[0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
 
-def run(learning_rate, run=0): 
-    suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins,run)
+def run(learning_rate, nrun=0): 
+    suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins, nrun)
     if usetoys:
         samples,fractions,labels = getToys(toymeans,toystds,toyfractions)
     else:
@@ -41,11 +41,7 @@ def run(learning_rate, run=0):
         trainfractions.append(f)
     
     test_samples1, _, test_labels1 = getToys(toymeans,toystds,[0.5, 0.5])
-    test_samples2, _, test_labels2 = getToys(toymeans,toystds,[0.1, 0.9])
-
-
-### complete supervision
-    model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
+    test_samples2, _, test_labels2 = getToys(toymeans,toystds,[0.2, 0.8])
     
 #### weak supervision
     model_weak = trainweak(trainsamples,trainfractions,layersize,NB_EPOCH_weak,suffix, learning_rate)
@@ -56,7 +52,9 @@ def run(learning_rate, run=0):
     auc_sup = None
     print 'Lengths : ', len(y_test1), len(y_test2)
     print 'Fracs : ', sum(y_test1), sum(y_test2)
-    if run == 0:
+    if nrun == 0:
+        ### complete supervision
+        model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
         auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision55', X_test1, y_test1)
         auc_sup = evaluateModel(None, plt, model_complete, 'CompleteSupervision28', X_test2, y_test2)
     auc_weak = evaluateModel(None, plt, model_weak, 'WeakSupervision55', X_test1, y_test1)
@@ -64,30 +62,28 @@ def run(learning_rate, run=0):
     return auc_sup, auc_weak
 
 # SetupATLAS()
-learning_rates = [9e-3]
+learning_rates = [1e-3]
 colors = ['r', 'g', 'b', 'c', 'k', 'm']
 all_weak_aucs = []
 runs = range(nruns)
 for index, lr in enumerate(learning_rates):
     plt.xlabel("False Positive")
     plt.ylabel("True Positive")
-    plt.ylim([0,1.7])
-    aucs_weak = []
-    aucs_sup = []
+    plt.ylim([0,3])
     for runnum in runs:
-        auc_sup,auc_weak = run(lr, run=runnum)
-        aucs_sup.append(auc_sup)
-        aucs_weak.append(auc_weak)
-    all_weak_aucs.append(aucs_weak)
-    plt.legend(loc='upper left', title='Trained on Data Fractions [0.2, 0.8]', frameon=True)
-    plt.savefig('plots/WeakSupervision_TT_check' + str(index))
-    plt.close()
+        print "this is run : ", runnum
+        auc_sup,auc_weak = run(lr, nrun=runnum)
+        all_weak_aucs.append(auc_weak)
+        if runnum == 2:
+            plt.legend(loc='upper left', title='Trained on Data Fractions Uniform Shifted', frameon=True)
+            plt.savefig('plots/WeakSupervision_TT_check_shifted')
+            plt.close()
+plt.close()
 plt.xlabel("run")
 plt.ylabel("auc")
-for index, lr in enumerate(learning_rates):
-    plt.plot(all_weak_aucs[index], color=colors[index], label=str(lr))
+plt.plot(all_weak_aucs)
 plt.legend(loc='lower right', frameon=True)
-plt.savefig('plots/stability_lr_study')
+plt.savefig('plots/stability_uniform-Shifted')
 # plt.plot(runs,aucs_sup,label='complete supervision')
 # plt.plot(runs,aucs_weak,label='weak supervision')
 # plt.ylabel('AUC')

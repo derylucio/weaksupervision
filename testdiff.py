@@ -4,9 +4,10 @@ from sklearn.metrics import roc_curve,auc
 from models import trainweak
 from dataprovider import getToys
 from sklearn.cross_validation import train_test_split
+from sklearn.mixture import GaussianMixture
 
-nruns = 3
-diffs = [0.6]#np.linspace(0.1, 0.75, 14)
+nruns = 20
+diffs = [0.6, 0.2]#np.linspace(0.1, 0.75, 14)
 layersize = 30
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
@@ -17,11 +18,23 @@ nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 NB_EPOCH_weak = 25
 LEARNING_RATE = 9e-3
+GMM = GaussianMixture(2)
+area_before = []
+area_after = []
+
+def getAUC(predict_weak, y_test):
+    fpr,tpr,thres = roc_curve(y_test, predict_weak)
+    area =  auc(fpr, tpr)
+    if area < 0.5:
+        fpr,tpr,thres = roc_curve(y_test, 1 - predict_weak) 
+        area = auc(fpr, tpr)
+    print area
+    return area
 
 def run(diff,run):
     toyfractions = [start_fraction, start_fraction + diff]*num_samples
     print toyfractions
-    suffix = '_etamax%d_nbins%d_diff%d'%(etamax*10,nbins,diff)
+    suffix = '_etamax%d_nbins%d_diff%d_reg'%(etamax*10,nbins,diff)
     samples,fractions,labels = getToys(toymeans,toystds,toyfractions)
     trainsamples = []
     trainlabels = []
@@ -41,16 +54,19 @@ def run(diff,run):
     X_test = np.concatenate( testsamples )
     y_test = np.concatenate( testlabels )
     predict_weak = model_weak.predict_proba(X_test)
-    fpr,tpr,thres = roc_curve(y_test, predict_weak)
-    area =  auc(fpr, tpr)
-    if area < 0.5:
-        fpr,tpr,thres = roc_curve(y_test, 1 - predict_weak) 
-        area = auc(fpr, tpr)
-    plt.hist(predict_weak[y_test == 1], histtype="step", normed=True, label='Quark')
-    plt.hist(predict_weak[y_test == 0], histtype="step", normed=True, label='Gloun')
-    plt.legend(loc='lower right', frameon=True)
-    plt.savefig('plots/dist' + str(run))
-    plt.close()
+    area = getAUC(predict_weak, y_test)
+    area_before.append(area)
+    GMM.fit(predict_weak)
+    predict_weak = GMM.predict_proba(predict_weak)
+    print predict_weak[:5]
+    predict_weak = predict_weak[:, 0]
+    area = getAUC(predict_weak, y_test)
+    area_after.append(area)
+    # plt.hist(predict_weak[y_test == 1], histtype="step", normed=True, label='Quark')
+    # plt.hist(predict_weak[y_test == 0], histtype="step", normed=True, label='Gloun')
+    # plt.legend(loc='lower right', frameon=True)
+    # plt.savefig('plots/dist' + str(run))
+    # plt.close()
     return area
 
 medians = []
@@ -83,4 +99,8 @@ ax2.set_ylabel('$<AUC>$',color='r')
 for tl in ax2.get_yticklabels():
     tl.set_color('r')
 
-plt.savefig('plots/sigmameanvsfractiondiff_dummy.png')
+plt.savefig('plots/sigmameanvsfractiondiff_noflip_gmm.png')
+plt.plot(area_before, color='r', label='Before GMM')
+plt.plot(area_after, color='b', label='After GMM')
+plt.legend()
+plt.show()
