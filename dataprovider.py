@@ -71,6 +71,5 @@ def getToys(means,stds,fractions):
         y = np.array( [True for x in signal]+[False for x in bckg] )
         labels.append(y)
     output = [ [float(len(yy[yy==True]))/len(yy)]*len(yy) for yy in labels]
-        
     return samples,output,labels
 

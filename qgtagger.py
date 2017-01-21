@@ -6,19 +6,20 @@ from sklearn.metrics import roc_curve
 from dataprovider import getSamples,getToys
 from models import traincomplete,trainweak
 
-nruns = 50
+nruns = 10
 layersize = 30
 
 NB_EPOCH = 40
-NB_EPOCH_weak = 50
+NB_EPOCH_weak = 0
 features = ['n','w','eec2']
 etamax = 2.1
 nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
-toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
-toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
-toyfractions =  [0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]*2 #[0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
+
+toymeans = [(10, 10), (0.8, 0.9), (0.03, 0.1)]#[(18,26),(0.06,0.09),(0.23,0.28)] #
+toystds  = [(100, 5), (200, 11), (1, 3)] #[(7,8),  (0.04,0.04),(0.05,0.04)] ##
+toyfractions =  [0]#[0.1, 0.2]*15#[0.1 , 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]*2 #[0.24, 0.25, 0.25, 0.26, 0.27, 0.29, 0.31, 0.33, 0.37, 0.39, 0.44]
 
 def run(learning_rate, nrun=0): 
     suffix = '_etamax%d_nbins%d_run%d'%(etamax*10,nbins, nrun)
@@ -62,28 +63,24 @@ def run(learning_rate, nrun=0):
     return auc_sup, auc_weak
 
 # SetupATLAS()
-learning_rates = [1e-3]
-colors = ['r', 'g', 'b', 'c', 'k', 'm']
 all_weak_aucs = []
 runs = range(nruns)
-for index, lr in enumerate(learning_rates):
-    plt.xlabel("False Positive")
-    plt.ylabel("True Positive")
-    plt.ylim([0,3])
-    for runnum in runs:
-        print "this is run : ", runnum
-        auc_sup,auc_weak = run(lr, nrun=runnum)
-        all_weak_aucs.append(auc_weak)
-        if runnum == 2:
-            plt.legend(loc='upper left', title='Trained on Data Fractions Uniform Shifted', frameon=True)
-            plt.savefig('plots/WeakSupervision_TT_check_shifted')
-            plt.close()
+plt.ylim([0, 3])
+for runnum in runs:
+    print "this is run : ", runnum
+    auc_sup,auc_weak = run(1e-2, nrun=runnum)
+    all_weak_aucs.append(auc_weak)
+    if runnum == 2:
+        plt.legend(loc='upper left', title='Trained on Data Fractions Uniform Edge-Case', frameon=True)
+        plt.savefig('plots/WeakSupervision_TT_check_EC')
+        plt.close()
 plt.close()
 plt.xlabel("run")
 plt.ylabel("auc")
+plt.ylim([0, 1])
 plt.plot(all_weak_aucs)
 plt.legend(loc='lower right', frameon=True)
-plt.savefig('plots/stability_uniform-Shifted')
+plt.savefig('plots/stability_uniform-EC')
 # plt.plot(runs,aucs_sup,label='complete supervision')
 # plt.plot(runs,aucs_weak,label='weak supervision')
 # plt.ylabel('AUC')

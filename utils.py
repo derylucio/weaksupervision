@@ -15,6 +15,8 @@ def SetupATLAS():
 
 from root_numpy import root2rec
 import numpy as np
+import os
+
 def getvar(var,filename):
     leaves = [var]
     array = root2rec(filename,'tree',leaves)
@@ -70,7 +72,12 @@ def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
     print label, 'max', max(predict_proba)
     print label,  'mean', np.mean(predict_proba)
     fpr,tpr,thres = roc_curve(y_test, predict_proba)
-    np.save('proba' + label, predict_proba)
+    proba_file = 'proba' + label
+    if os.path.exists(proba_file):
+        os.remove(proba_file)
+    np.save(proba_file, predict_proba)
+    if os.path.exists('ytest'):
+        os.remove('ytest')
     np.save('ytest', y_test)	
     area =  auc(fpr, tpr)
     if area < 0.5:
