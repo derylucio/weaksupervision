@@ -66,7 +66,6 @@ def getToys(means,stds,fractions):
                 for mu,sigma in zip(means,stds)
                 ]).T
         X = np.concatenate([signal,bckg])
-        # X = scaler.fit_transform(X)
         samples.append( X )
         y = np.array( [True for x in signal]+[False for x in bckg] )
         labels.append(y)

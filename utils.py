@@ -1,6 +1,6 @@
 # import rootpy
 # from rootpy.plotting.style import get_style, set_style
-# from matplotlib import rc
+from matplotlib import rc
 def SetupATLAS():
     rootpy.log.basic_config_colorized()
     #use latex for text
@@ -66,26 +66,25 @@ def getpairflav(id0,id1):
 from pylab import *
 from sklearn.metrics import roc_curve
 from sklearn.metrics import auc
-def evaluateModel(hist_ax, plot_ax, model, label, x_test, y_test):
-    predict_proba = model.predict_proba(x_test)
-    print label, 'min', min(predict_proba)
-    print label, 'max', max(predict_proba)
-    print label,  'mean', np.mean(predict_proba)
-    fpr,tpr,thres = roc_curve(y_test, predict_proba)
-    proba_file = 'proba' + label
-    if os.path.exists(proba_file):
-        os.remove(proba_file)
-    np.save(proba_file, predict_proba)
-    if os.path.exists('ytest'):
-        os.remove('ytest')
-    np.save('ytest', y_test)	
+
+def getAUC(predict_weak, y_test):
+    fpr,tpr,thres = roc_curve(y_test, predict_weak)
     area =  auc(fpr, tpr)
     if area < 0.5:
-        print 'Flipped'
-        fpr,tpr,thres = roc_curve(y_test, 1 - predict_proba)	
+        fpr,tpr,thres = roc_curve(y_test, 1 - predict_weak) 
         area = auc(fpr, tpr)
-    print label, area
-    if label == 'Complete Supervision':
+    return area
+
+def evaluateModel(plot_ax, predictions, y_test, label):
+    print predictions.shape
+    print y_test.shape
+    fpr,tpr,thres = roc_curve(y_test, predictions)	
+    area =  auc(fpr, tpr)
+    if area < 0.5:
+        fpr,tpr,thres = roc_curve(y_test, 1 - predictions)	
+        area = auc(fpr, tpr)
+
+    if(label == 'CompleteSupervision' or label == 'WeakSupervision'):
         plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
     else:
         plot_ax.plot(fpr, tpr, linestyle='--', label=label+', auc=%1.2f'%area)

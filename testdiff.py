@@ -4,8 +4,8 @@ from sklearn.metrics import roc_curve,auc
 from models import trainweak, traincomplete
 from dataprovider import getToys
 from sklearn.cross_validation import train_test_split
-from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
+from utils import getAUC
 
 nruns = 50
 diffs = [0.01, 0.02, 0.05, 0.1, 0.3, 0.5]
@@ -21,29 +21,15 @@ NB_EPOCH_weak = 25
 LEARNING_RATE = 9e-3
 scaler = StandardScaler()
 
-def getAUC(predict_weak, y_test):
-    fpr,tpr,thres = roc_curve(y_test, predict_weak)
-    area =  auc(fpr, tpr)
-    if area < 0.5:
-        fpr,tpr,thres = roc_curve(y_test, 1 - predict_weak) 
-        area = auc(fpr, tpr)
-    return area
 
 def run(samples, fracs, X_test, y_test):
     suffix = '_diff_etamax%d_nbins%d'%(etamax*10,nbins)
 
-    trainsamples = []
-    trainfractions = []
-    for X,f in zip(samples,fracs):
-        trainsamples.append(X)
-        trainfractions.append(f)
-
 #### weak supervision
-    model_weak = trainweak(trainsamples,trainfractions,layersize, NB_EPOCH_weak, suffix, LEARNING_RATE)
+    model_weak = trainweak(samples,fracs,layersize, NB_EPOCH_weak, suffix, LEARNING_RATE)
 
     predict_weak = model_weak.predict_proba(X_test)
-    area = getAUC(predict_weak, y_test)
-    print 'Auc : ', area
+    area = getAUC(predict_weak, y_test)    
     return area
 
 iqrs = []
@@ -78,6 +64,7 @@ for diff in diffs:
         print str(toyfractions) + ', Run ', i
         aucs.append(run(samples, fracs, X_test, y_test))
 
+    # Compute Statistics
     medians.append(np.median(aucs))
     q75, q25 = np.percentile(aucs, [75 ,25])
     iqr = q75-q25
@@ -100,4 +87,5 @@ ax2.plot(diffs, medians,'r--',marker='v')
 ax2.set_ylabel('$<AUC>$',color='r')
 for tl in ax2.get_yticklabels():
     tl.set_color('r')
+
 plt.savefig('toy_plots/sigmameanvsfracdiff_02_start.png')
