@@ -3,7 +3,7 @@ from utils import getjetvar
 import numpy as np
 
 def getSamples(features,etamax,bins):
-    filename = 'data/20161103_16h20min.root'
+    filename = 'data/default.root'
     id0 = getjetvar('j0','id',filename)
     eta0 = getjetvar('j0','eta',filename)
     eta1 = getjetvar('j1','eta',filename)

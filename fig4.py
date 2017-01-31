@@ -17,8 +17,8 @@ etamax = 2.1
 nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 usetoys = True
-toymeans = [(18,26),(0.06,0.09),(0.23,0.28)] 
-toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
+toymeans = [(18,26),(0.06,0.09),(0.23,0.28),(26,18),(0.09,0.06)] 
+toystds  = [(7,8),  (0.04,0.04),(0.05,0.04),(7,8),  (0.04,0.04)]
 toyfractions = np.linspace(0.2,0.4,9)
 scaler = StandardScaler()
 
@@ -74,16 +74,6 @@ for runnum in range(nruns):
         plt.xlabel('True Positive Rate')
         plt.ylabel('False Positive Rate')
         plt.legend(loc='lower right', frameon=False)
-        plt.savefig('toy_plots/weak_vs_complete')
+        plt.savefig('paper_plots/fig4.png')
         plt.close()
 plt.close()
-
-all_aucs = np.array(all_aucs)
-plt.xlabel("run")
-plt.ylabel("auc")
-plt.ylim([0, 1])
-plt.plot(all_aucs[:, 0], label='Complete Supervision')
-plt.plot(all_aucs[:, 1], label='Weak Supervision')
-plt.legend(loc='lower right', frameon=True)
-plt.savefig('toy_plots/weavk_vs_complete_stability')
-

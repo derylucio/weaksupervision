@@ -33,6 +33,7 @@ def run(samples, fracs, X_test, y_test):
 
 iqrs = []
 medians = []
+maxauc = []
 for diff in diffs:
     toyfractions = [start_fraction, start_fraction + diff]
     print 'Current Fractions : ' + str(toyfractions)
@@ -65,6 +66,7 @@ for diff in diffs:
 
     # Compute Statistics
     medians.append(np.median(aucs))
+    maxauc.append(max(aucs))
     q75, q25 = np.percentile(aucs, [75 ,25])
     iqr = q75-q25
     iqrs.append(iqr)
@@ -84,6 +86,7 @@ for tl in ax1.get_yticklabels():
     tl.set_color('b')
 
 ax2 = ax1.twinx()
+ax2.plot(diffs, maxauc,'r-.',marker='v',mfc='none')
 ax2.plot(diffs, medians,'r--',marker='v')
 ax2.set_ylabel('$<AUC>$',color='r')
 ax2.set_ylim([0.83,0.9])
@@ -91,4 +94,4 @@ for tl in ax2.get_yticklabels():
     tl.set_color('r')
 
 plt.tight_layout()
-plt.savefig('toy_plots/sigmameanvsfracdiff_02_start.png')
+plt.savefig('paper_plots/fig2.png')

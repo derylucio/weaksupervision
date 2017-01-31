@@ -74,16 +74,6 @@ for runnum in range(nruns):
         plt.xlabel('True Positive Rate')
         plt.ylabel('False Positive Rate')
         plt.legend(loc='lower right', frameon=False)
-        plt.savefig('toy_plots/weak_vs_complete')
+        plt.savefig('paper_plots/fig1.png')
         plt.close()
 plt.close()
-
-all_aucs = np.array(all_aucs)
-plt.xlabel("run")
-plt.ylabel("auc")
-plt.ylim([0, 1])
-plt.plot(all_aucs[:, 0], label='Complete Supervision')
-plt.plot(all_aucs[:, 1], label='Weak Supervision')
-plt.legend(loc='lower right', frameon=True)
-plt.savefig('toy_plots/weavk_vs_complete_stability')
-

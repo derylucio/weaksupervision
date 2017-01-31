@@ -1,5 +1,5 @@
-# import rootpy
-# from rootpy.plotting.style import get_style, set_style
+import rootpy
+from rootpy.plotting.style import get_style, set_style
 from matplotlib import rc
 def SetupATLAS():
     rootpy.log.basic_config_colorized()
@@ -84,8 +84,8 @@ def evaluateModel(plot_ax, predictions, y_test, label):
         fpr,tpr,thres = roc_curve(y_test, 1 - predictions)	
         area = auc(fpr, tpr)
 
-    if(label == 'CompleteSupervision' or label == 'WeakSupervision'):
-        plot_ax.plot(fpr, tpr, label=label+', auc=%1.2f'%area)
+    if(label == 'Fully supervised NN' or label == 'Weakly supervised NN'):
+        plot_ax.plot(fpr, tpr, label=label+', AUC=%1.2f'%area)
     else:
         plot_ax.plot(fpr, tpr, linestyle='--', label=label+', auc=%1.2f'%area)
     return area
