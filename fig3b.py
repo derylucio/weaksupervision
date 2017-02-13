@@ -9,7 +9,6 @@ from sklearn.metrics import auc
 
 SetupATLAS()
 
-#corr = np.array([1,0.01,0.])
 corr = np.array([1,0.01])
 gcorr = np.array([0.5,0.01])
 
@@ -19,15 +18,13 @@ NB_EPOCH = 150
 NB_EPOCH_weak = 30
 LEARNING_RATE = 9e-3
 features = ['n','w']
-colors = ['r','c','m']
+colors = ['r','c']
 etamax = 2.1
 nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 
 def run(): 
     
-    suffix = '_tagger_etamax%d_nbins%d'%(etamax*10,nbins)
-
     samples,fractions,labels = getSamples(features,etamax,bins)
     print 'n bins',len(labels)
     print 'sample sizes',[len(y) for y in labels]
@@ -71,7 +68,7 @@ def run():
         model_completeCR1 = traincomplete(trainsamplesCR1,trainlabelsCR1,NB_EPOCH)
         
 #### weak supervision
-        model_weak = trainweak(trainsamplesCR1,trainfractions,layersize,NB_EPOCH_weak,suffix,LEARNING_RATE)
+        model_weak = trainweak(trainsamplesCR1,trainfractions,layersize,NB_EPOCH_weak,LEARNING_RATE)
         model_completes.append( model_complete )
         model_completeCR1s.append( model_completeCR1 )
         model_weaks.append( model_weak )

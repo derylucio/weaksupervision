@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve,auc
 from models import trainweak, traincomplete
 from dataprovider import getToys
-from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import StandardScaler
 from utils import getAUC,SetupATLAS
 
@@ -13,19 +11,14 @@ layersize = 30
 toymeans = [(18,26),(0.06,0.09),(0.23,0.28)]
 toystds  = [(7,8),  (0.04,0.04),(0.05,0.04)]
 start_fraction = 0.2
-num_samples = 1
-etamax = 2.1
-nbins = 12
-bins = np.linspace(-2.1,2.1,nbins+1)
 NB_EPOCH_weak = 25
 LEARNING_RATE = 9e-3
 scaler = StandardScaler()
 
 def run(samples, fracs, X_test, y_test):
-    suffix = '_diff_etamax%d_nbins%d'%(etamax*10,nbins)
 
 #### weak supervision
-    model_weak = trainweak(samples,fracs,layersize, NB_EPOCH_weak, suffix, LEARNING_RATE)
+    model_weak = trainweak(samples,fracs,layersize, NB_EPOCH_weak, LEARNING_RATE)
 
     predict_weak = model_weak.predict_proba(X_test)
     area = getAUC(predict_weak, y_test)    

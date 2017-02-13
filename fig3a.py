@@ -18,8 +18,6 @@ nbins = 12
 bins = np.linspace(-2.1,2.1,nbins+1)
 
 def run(): 
-
-    suffix = '_tagger_etamax%d_nbins%d'%(etamax*10,nbins)
     
     samples,fractions,labels = getSamples(features,etamax,bins)
     print 'n bins',len(labels)
@@ -42,7 +40,7 @@ def run():
     model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
     
 #### weak supervision
-    model_weak = trainweak(trainsamples,trainfractions,layersize, NB_EPOCH_weak ,suffix, LEARNING_RATE)
+    model_weak = trainweak(trainsamples,trainfractions,layersize, NB_EPOCH_weak, LEARNING_RATE)
 
 ###performance
     X_test = np.concatenate( testsamples )
