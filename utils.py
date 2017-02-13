@@ -13,7 +13,7 @@ def SetupATLAS():
     rc('font',family='sans-serif',weight='medium',size=16)
     rc('legend',fontsize=16)
 
-from root_numpy import root2rec
+from root_numpy import root2array
 import numpy as np
 
 def getjetvar(jet,var,filename,
@@ -22,7 +22,7 @@ def getjetvar(jet,var,filename,
     
     leaves = [jet+'pt',jet+'eta']
     if var not in ['pt','eta']: leaves += [jet+var]
-    array = root2rec(filename,'tree',leaves)
+    array = root2array(filename,'tree',leaves)
     
     vars = array[jet+var]
     pt = array[jet+'pt']
