@@ -71,8 +71,8 @@ for runnum in range(nruns):
         for i in range(num_features):
             feature = X_test[:, i]
             evaluateModel(plt, feature, y_test, 'Feature ' + str(i + 1))
-        plt.xlabel('True Positive Rate')
-        plt.ylabel('False Positive Rate')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
         plt.legend(loc='lower right', frameon=False)
         plt.savefig('paper_plots/fig1.png')
         plt.close()

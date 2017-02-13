@@ -65,7 +65,7 @@ def run():
     model_completes = []
     model_completeCR1s = []
     model_weaks = []
-    for x in range(50):
+    for x in range(1):
 ### complete supervision
         model_complete = traincomplete(trainsamples,trainlabels,NB_EPOCH)
         model_completeCR1 = traincomplete(trainsamplesCR1,trainlabelsCR1,NB_EPOCH)
@@ -176,9 +176,9 @@ def run():
     geffs_ratio_err = getIQR(allgeffs/allgeffsCR1)
     geffs_ratio_weak_err = getIQR(allgeffs_weak/allgeffsCR1)
 
-    ax1.plot(effs, geffs     , linestyle='-', color='b', marker='o', mec='b', mfc='b', label='Fully supervised DT')
-    ax1.plot(effs, geffsCR1  , linestyle='--', color='b', marker='o', mec='b', mfc='None', label='Fully supervised ST')
-    ax1.plot(effs, geffs_weak, linestyle='-', color='r', marker='o', mec='r', mfc='r', label='Weakly supervised')
+    ax1.plot(effs, geffs     , linestyle='-', color='b', marker='o', mec='b', mfc='b', label='Fully supervised NN trained on simulation')
+    #ax1.plot(effs, geffsCR1  , linestyle='--', color='b', marker='o', mec='b', mfc='None', label='Fully supervised ST')
+    ax1.plot(effs, geffs_weak, linestyle='-', color='r', marker='o', mec='r', mfc='r', label='Weakly supervised NN trained on pseudo-data')
     ax1.yaxis.set_ticks(np.arange(0.,1.0,0.2))
     ax1.set_ylim([0.,0.8])
     ax1.set_ylabel('Gluon Jet efficiency')
@@ -189,7 +189,7 @@ def run():
     ax2.yaxis.set_ticks(np.arange(0.9,1.4,0.1))
     ax2.set_ylim([0.9,1.35])
     ax2.axhline(y=1,linestyle='--',color='black')
-    ax2.set_ylabel('Ratio to FS ST')
+    ax2.set_ylabel('Ratio to fully supervised NN\n trained on pseudo-data',fontsize=10)
     
     ax2.set_xlabel('Quark Jet efficiency')
     plt.xlim([0.2,1.0])
