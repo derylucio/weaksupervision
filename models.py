@@ -10,9 +10,6 @@ from keras.optimizers import Adam, SGD
 from keras.regularizers import l2, l1
 import os
 
-WEIGHT_REGULARIZATION = 0
-REGULARIZATION = 0
-
 def traincomplete(trainsamples,trainlabels,nb_epoch):
     X_train = np.concatenate( trainsamples )
     y_train = np.concatenate( trainlabels )
@@ -43,11 +40,10 @@ def data_generator(samples, output):
 def loss_function(ytrue, ypred):
     # Assuming that ypred contains the same ratio replicated
     loss = K.sum(ypred)/ypred.shape[0] - K.sum(ytrue)/ypred.shape[0]
-    constrib =  REGULARIZATION*K.std(ypred) 
-    loss = K.square(loss) - constrib
+    loss = K.square(loss)
     return loss
 
-def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix, learning_rate):
+def trainweak(trainsamples,trainfractions,layersize,nb_epoch,learning_rate):
     listX_train = []
     listX_val = []
     listf_train = []
@@ -64,10 +60,10 @@ def trainweak(trainsamples,trainfractions,layersize,nb_epoch,suffix, learning_ra
     
     model_weak = Sequential()
     model_weak.add(Dense(layersize, input_dim=(trainsamples[0].shape[1]), 
-                         init='normal', activation='sigmoid', W_regularizer=l2(WEIGHT_REGULARIZATION)) )
+                         init='normal', activation='sigmoid') )
     model_weak.add(Dense(1, init='normal', activation='sigmoid') )
     model_weak.compile(loss=loss_function, optimizer=Adam(lr=learning_rate))
-    save_file_name = 'weights'+suffix+'.h5'
+    save_file_name = 'weights.h5'
     if os.path.exists(save_file_name):
         print 'Weak Supervision Weight File Exists. Replacing ...'
         os.remove(save_file_name)

@@ -15,13 +15,6 @@ def SetupATLAS():
 
 from root_numpy import root2rec
 import numpy as np
-import os
-
-def getvar(var,filename):
-    leaves = [var]
-    array = root2rec(filename,'tree',leaves)
-    vars = array[var]
-    return vars
 
 def getjetvar(jet,var,filename,
               ptmin=20,ptmax=200,
@@ -38,30 +31,6 @@ def getjetvar(jet,var,filename,
     if not nocut:
         vars = vars[(pt>ptmin) & (pt<ptmax) & (np.fabs(eta)>etamin) & (np.fabs(eta)<etamax)]
     return vars
-
-def getflavfrac(id0,id1,flavpair='gg'):
-    numerator = 0.
-    if 'gg'==flavpair:
-        numerator = id0[ (id0==id1) & (id0==21) ].shape[0]
-    elif 'gq'==flavpair or 'qg'==flavpair:
-        numerator = id0[ (id0!=id1) & ((id0==21) | (id1==21)) ].shape[0]
-    elif 'qq'==flavpair:
-        numerator = id0[ (id0==id1) & (id0<6) ].shape[0]
-    denominator = id0.shape[0]
-    return float(numerator)/denominator
-
-def getpairflav(id0,id1):
-    flavs = []
-    for i0,i1 in zip(id0,id1):
-        if i0==i1 and 21==i0:
-            flavs.append('gg')
-        elif i0==i1 and i0<6:
-            flavs.append('qq')
-        elif i0!=i1 and (21==i0 or 21==i1):
-            flavs.append('qg')
-        else:
-            flavs.append('idk')
-    return np.array(flavs)
 
 from pylab import *
 from sklearn.metrics import roc_curve

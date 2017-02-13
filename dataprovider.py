@@ -27,30 +27,6 @@ def getSamples(features,etamax,bins):
 
     return samples,output,y
 
-def getInclToys(means,stds,fraction,nsamples):
-    samplesize = 200000
-    samples = []
-    labels = []
-    scaler = StandardScaler()
-    signal = np.stack([
-            np.random.normal(mu[0],sigma[0],int(samplesize*fraction))
-            for mu,sigma in zip(means,stds)
-            ]).T
-    bckg = np.stack([
-            np.random.normal(mu[1],sigma[1],int(samplesize*(1-fraction)))
-            for mu,sigma in zip(means,stds)
-            ]).T
-    X = np.concatenate([signal,bckg])
-    X = scaler.fit_transform(X)
-    y = np.array( [True for x in signal]+[False for x in bckg] )
-
-    rndmindices = np.random.permutation(X.shape[0])
-    samples = np.array_split(X[rndmindices],nsamples)
-    labels = np.array_split(y[rndmindices],nsamples)
-    output = [ [fraction]*len(yy) for yy in labels]
-
-    return samples,output,labels
-
 def getToys(means,stds,fractions):
     samplesize = 20000
     samples = []
