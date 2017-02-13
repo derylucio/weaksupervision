@@ -7,7 +7,7 @@ from dataprovider import getSamples
 from models import traincomplete,trainweak
 from sklearn.metrics import auc
 
-SetupATLAS()
+#SetupATLAS()
 
 corr = np.array([1,0.01])
 gcorr = np.array([0.5,0.01])

@@ -68,7 +68,7 @@ for diff in diffs:
     print diff, np.median(aucs), iqr, aucs
     print "<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>"
 
-SetupATLAS()
+#SetupATLAS()
 
 fig, ax1 = plt.subplots()
 ax1.plot(diffs, iqrs,'b--',marker='o')

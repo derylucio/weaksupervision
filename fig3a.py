@@ -46,7 +46,7 @@ def run():
     X_test = np.concatenate( testsamples )
     y_test = np.concatenate( testlabels )
 
-    SetupATLAS()
+#    SetupATLAS()
 
     predict_complete = model_complete.predict_proba(X_test)
     fpr,tpr,thres = roc_curve(y_test, predict_complete)

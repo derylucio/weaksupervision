@@ -45,7 +45,7 @@ for i in range(len(samples)):
     curr_prev = curr_next
 X_test = np.array(all_samples[curr_next:])
 
-SetupATLAS()
+#SetupATLAS()
 
 run(samples, labels, fractions, X_test, y_test)
 num_features = len(toymeans)
